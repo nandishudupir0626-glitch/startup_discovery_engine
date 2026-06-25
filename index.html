@@ -5,15 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Top Startups Directory</title>
     <link rel="stylesheet" href="style.css">
-    <!-- PapaParse helps read your Google Sheet CSV securely and easily -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- Official Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
     <header>
-        <h1>Startup Discovery Engine</h1>
+        <h1>Top Startups Directory</h1>
         <p>A curated list of high-growth companies with real-time news mentions.</p>
-        <a href="https://forms.gle/7fp2cteKmN8X93tT7" target="_blank" class="submit-startup-btn">Submit a Startup</a>
+        <a href="https://forms.gle/qksnBJHmJhoY1KWq8" target="_blank" class="submit-startup-btn">Submit a Startup</a>
     </header>
 
     <main>
@@ -23,23 +23,21 @@
             
             <select id="sector-filter">
                 <option value="">All Sectors</option>
-                <!-- Options will populate automatically from your Google Sheet -->
             </select>
 
             <select id="city-filter">
                 <option value="">All Cities</option>
-                <!-- Options will populate automatically from your Google Sheet -->
             </select>
         </section>
 
         <!-- Dynamic Startup Cards Grid -->
         <section id="directory-grid" class="grid-container">
-            <div class="loading-state">Loading startups...</div>
+            <div class="loading-state">Loading startups from database...</div>
         </section>
     </main>
 
     <footer>
-        <p>© 2026 Top Startups Directory. Built using Google Sheets and Google News RSS.</p>
+        <p>© 2026 Top Startups Directory. Powered by Supabase & Google News RSS.</p>
     </footer>
 
     <script src="app.js"></script>

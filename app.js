@@ -1,5 +1,9 @@
-// Your live published Google Sheets CSV Link
-const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR8ZNCupe7kluMFUV3MfdGz3iTqOHOL1LNH_A6yqqOlcBzPUvDkihajsOM9NdaRDnV4A8qQHnZNxAih/pub?gid=0&single=true&output=csv';
+// Configure Supabase
+const SUPABASE_URL = 'https://bqkzbgdkmbcjohghxeah.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxa3piZ2RrbWJjam9oZ2h4ZWFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMzYzNDMsImV4cCI6MjA5NzkxMjM0M30.LAq20u1REbHM4B0e-GoeGxRj9X4_z85nKmyoe9tGNDU';
+
+// Create Supabase Client
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let allStartups = [];
 
@@ -9,26 +13,27 @@ window.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
 });
 
-// Fetch Data from Google Sheets using PapaParse
-function fetchData() {
-    Papa.parse(SHEET_CSV_URL, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        complete: function(results) {
-            allStartups = results.data;
-            populateFilterOptions();
-            renderDirectory(allStartups);
-        },
-        error: function(err) {
-            document.getElementById('directory-grid').innerHTML = 
-                `<div class="loading-state">Error loading data. Please double check your Google Sheets CSV link configuration.</div>`;
-            console.error(err);
-        }
-    });
+// Fetch Data directly from Supabase
+async function fetchData() {
+    try {
+        const { data, error } = await supabaseClient
+            .from('startups')
+            .select('*')
+            .order('id', { ascending: true });
+
+        if (error) throw error;
+
+        allStartups = data;
+        populateFilterOptions();
+        renderDirectory(allStartups);
+    } catch (err) {
+        document.getElementById('directory-grid').innerHTML = 
+            `<div class="loading-state">Error loading data from database. Please check your Supabase credentials.</div>`;
+        console.error("Database Error:", err.message);
+    }
 }
 
-// Automatically populate the dropdown filters with unique values from the sheet
+// Automatically populate the dropdown filters with unique values from Supabase
 function populateFilterOptions() {
     const sectors = new Set();
     const cities = new Set();
@@ -40,6 +45,10 @@ function populateFilterOptions() {
 
     const sectorFilter = document.getElementById('sector-filter');
     const cityFilter = document.getElementById('city-filter');
+
+    // Reset filters
+    sectorFilter.innerHTML = '<option value="">All Sectors</option>';
+    cityFilter.innerHTML = '<option value="">All Cities</option>';
 
     sectors.forEach(sector => {
         const option = document.createElement('option');
@@ -90,7 +99,6 @@ function renderDirectory(data) {
                 </div>
             </div>
             <div>
-                <!-- News section with a temporary loading message -->
                 <div class="news-section">
                     <div class="news-title">Latest Mention</div>
                     <div class="news-list" id="news-${startup.id}">
@@ -103,28 +111,24 @@ function renderDirectory(data) {
 
         grid.appendChild(card);
 
-        // Fetch dynamic news for this startup (from Phase 4 setup)
+        // Fetch dynamic news for this startup using Google News RSS
         fetchLatestNews(startup.name, startup.id);
     });
 }
 
-// Phase 4: Google News RSS Fetcher via a Free RSS to JSON Proxy
+// Fetch news using the free RSS-to-JSON proxy
 async function fetchLatestNews(startupName, startupId) {
     const newsContainer = document.getElementById(`news-${startupId}`);
     
     try {
-        // 1. Create a query specific to the startup
         const searchPhrase = `${startupName} startup`;
         const rssFeedUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(searchPhrase)}&hl=en-IN&gl=IN&ceid=IN:en`;
-        
-        // 2. Wrap Google News XML feed into a JSON request using a free rss2json.com tier URL
         const rss2JsonApi = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssFeedUrl)}`;
         
         const response = await fetch(rss2JsonApi);
         const data = await response.json();
 
         if (data.status === 'ok' && data.items && data.items.length > 0) {
-            // Take the 2 most recent news articles
             const articles = data.items.slice(0, 2);
             
             newsContainer.innerHTML = articles.map(article => `
